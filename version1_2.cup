@@ -1,0 +1,26 @@
+import java_cup.runtime.*;
+import java.io.*;
+import java.util.*;
+
+parser code {:
+	public static void main(String args[]) throws Exception {
+		new parser(new Yylex(new InputStreamReader(System.in))).parse();
+	}
+:}
+
+action code {:
+:}
+terminal String VARIABLE;
+terminal Integer ENTIER;
+
+terminal GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE,
+,ESPER, INTER,VAR, PACK,FUNC, IMPORT, FOR, GO, MAIN, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER;
+
+
+non terminal prog, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
+
+type_variable::=INT| BOOL;
+
+declaration_variable::= VAR liste_variable type_variable POINTVIRG; 
+liste_variable::= VARIABLE liste_variable | VARIABLE;
+liste_variable_fonction::=
