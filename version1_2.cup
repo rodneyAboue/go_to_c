@@ -9,18 +9,50 @@ parser code {:
 :}
 
 action code {:
+	public ArrayList<String> listeImport = new ArrayList<>();
+	String rendu="";
 :}
 terminal String VARIABLE;
 terminal Integer ENTIER;
 
-terminal GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE,
+terminal TYPE,CHAN, SYNC,MAKE, GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE
 ,ESPER, INTER,VAR, PACK,FUNC, IMPORT, FOR, GO, MAIN, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER;
 
 
-non terminal prog, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
+non terminal prog, zone_import, zone_main, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
+non terminal import1,import2,liste_import;
+prog::= PACK MAIN zone_import {:
+					//System.out.println("ok");	
+				:};
+zone_import::= import1	{:
+							//System.out.println("AFFICHAGE DES IMPORTS");
+	                        System.out.println(listeImport);
+	                        for (int i = 0; i < listeImport.size(); i++) {
+     							if (listeImport.get(i).equals("fmt")) {
+     							 	rendu= rendu+"#include<stdio.h>";
+     							}
+	    					}
 
-type_variable::=INT| BOOL;
+						:} | import2 {:
+						System.out.println("import2 ok");	
+				:};
+import1::= 	IMPORT GUIL VARIABLE:var1 GUIL import1	{:
+														listeImport.add(var1);
+													:} |
+			IMPORT GUIL VARIABLE:var1 GUIL{:
+										listeImport.add(var1);
+									:}; 
 
-declaration_variable::= VAR liste_variable type_variable POINTVIRG; 
-liste_variable::= VARIABLE liste_variable | VARIABLE;
+import2::= IMPORT PAROUV liste_import PARFER;
+liste_import::= GUIL VARIABLE GUIL liste_import | GUIL VARIABLE GUIL;
+/*type_variable::=INT| BOOL;
+
+declaration_variable::= VAR liste_variable type_variable ; 
+liste_variable::= ensemble_variable liste_variable | ensemble_variable;
+ensemble_variable::= variables VIRG ensemble_variable| variables;
+variables::= simple| tableau
+simple ::= VARIABLE ;
+tableau::= VARIABLE CROOUV ENTIER CROFER
+
 liste_variable_fonction::=
+*/

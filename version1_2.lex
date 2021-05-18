@@ -13,9 +13,8 @@ import = "import"
 for = "for"
 go = "go"
 main = "main"
-fmt = "fmt"
+const="const"
 var = "var"
-sync = "sync"
 type = "type"
 make = "make"
 chan ="chan"
@@ -24,7 +23,7 @@ bool= "bool"
 true = "true"
 false = "false"
 number = [0-9]+
-variable =[a-z\_][a-zA-Z0-9\_]*
+variable =[a-z][a-zA-Z0-9]+
 
 %%
 "="			{ return new Symbol(sym.EGAL); }
@@ -45,8 +44,7 @@ variable =[a-z\_][a-zA-Z0-9\_]*
 "{"			{ return new Symbol(sym.ACCOUV); }
 "}"			{ return new Symbol(sym.ACCFER); }
 ";"			{ return new Symbol(sym.POINTVIRG); }
-
-{sync}		{ return new Symbol(sym.SYNC); }
+" "			{}
 {var}		{ return new Symbol(sym.VAR); }
 {number}	{ return new Symbol(sym.ENTIER, new Integer (yytext()));}
 {comments}	{}
@@ -55,11 +53,18 @@ variable =[a-z\_][a-zA-Z0-9\_]*
 {import}	{ return new Symbol(sym.IMPORT); }
 {for}		{ return new Symbol(sym.FOR); }
 {go}		{ return new Symbol(sym.GO); }
+{chan}		{ return new Symbol(sym.CHAN); }
 {main}		{ return new Symbol(sym.MAIN); }
+{make}		{ return new Symbol(sym.MAKE); }
+{type}		{ return new Symbol(sym.TYPE); }
 {int}		{ return new Symbol(sym.INT); }
 {bool}		{ return new Symbol(sym.BOOL); }
 {const}		{ return new Symbol(sym.CONST); }
 {true}		{ return new Symbol(sym.TRUE); }
 {false}		{ return new Symbol(sym.FALSE); }
+"\r\n" 		{}
+"\n"		{}
+"\t"		{}
 {variable}	{ return new Symbol(sym.VARIABLE, new String (yytext()));}
-.			{}
+
+.			{ System.out.println(" Erreur ligne "+(yyline+1)+" colonne "+(yycolumn+1)+" : "+yytext()+" => caractère inconnu ! "); }
