@@ -1,4 +1,6 @@
 package main
 import 	"fmt"
-import 	"maihjhh"
-		
+func maFonction1() {}
+func main() {
+	
+}

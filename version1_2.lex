@@ -12,7 +12,6 @@ func = "func"
 import = "import"
 for = "for"
 go = "go"
-main = "main"
 const="const"
 var = "var"
 type = "type"
@@ -54,7 +53,6 @@ variable =[a-z][a-zA-Z0-9]+
 {for}		{ return new Symbol(sym.FOR); }
 {go}		{ return new Symbol(sym.GO); }
 {chan}		{ return new Symbol(sym.CHAN); }
-{main}		{ return new Symbol(sym.MAIN); }
 {make}		{ return new Symbol(sym.MAKE); }
 {type}		{ return new Symbol(sym.TYPE); }
 {int}		{ return new Symbol(sym.INT); }

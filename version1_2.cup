@@ -16,17 +16,20 @@ terminal String VARIABLE;
 terminal Integer ENTIER;
 
 terminal TYPE,CHAN, SYNC,MAKE, GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE
-,ESPER, INTER,VAR, PACK,FUNC, IMPORT, FOR, GO, MAIN, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER;
+,ESPER, INTER,VAR, PACK,FUNC, IMPORT, FOR, GO, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER;
 
 
-non terminal prog, zone_import, zone_main, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
-non terminal import1,import2,liste_import;
-prog::= PACK MAIN zone_import {:
+non terminal prog, zone_import,zone_fonction, zone_main, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
+non terminal ,import1,import2,liste_import,entete_fonction,block,liste_fonction;
+
+prog::= PACK nom_pakage zone_import zone_fonction {:
 					//System.out.println("ok");	
 				:};
+nom_pakage::= MAIN | VARIABLE;
 zone_import::= import1	{:
+							System.out.println("zone import 1 ok");
 							//System.out.println("AFFICHAGE DES IMPORTS");
-	                        System.out.println(listeImport);
+	                        //System.out.println(listeImport);
 	                        for (int i = 0; i < listeImport.size(); i++) {
      							if (listeImport.get(i).equals("fmt")) {
      							 	rendu= rendu+"#include<stdio.h>";
@@ -34,7 +37,7 @@ zone_import::= import1	{:
 	    					}
 
 						:} | import2 {:
-						System.out.println("import2 ok");	
+						System.out.println("zone import 1 ok");	
 				:};
 import1::= 	IMPORT GUIL VARIABLE:var1 GUIL import1	{:
 														listeImport.add(var1);
@@ -45,6 +48,14 @@ import1::= 	IMPORT GUIL VARIABLE:var1 GUIL import1	{:
 
 import2::= IMPORT PAROUV liste_import PARFER;
 liste_import::= GUIL VARIABLE GUIL liste_import | GUIL VARIABLE GUIL;
+zone_fonction::= liste_fonction {: 
+	System.out.println("zone fonction ok"); 
+	:} | ;
+liste_fonction ::= entete_fonction block liste_fonction | entete_fonction block ;
+entete_fonction::= FUNC VARIABLE  PAROUV PARFER;
+block::=ACCOUV ACCFER;
+
+
 /*type_variable::=INT| BOOL;
 
 declaration_variable::= VAR liste_variable type_variable ; 
