@@ -16,16 +16,17 @@ terminal String VARIABLE;
 terminal Integer ENTIER;
 
 terminal TYPE,CHAN, SYNC,MAKE, GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE
-,ESPER, INTER,VAR, PACK,FUNC, IMPORT, FOR, GO, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER;
+,ESPER, INTER,VAR, PACK,FUNC, IMPORT,IF, FOR, GO, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER,BARREVER,POINTINTER,RANGE;
 
 
 non terminal prog, zone_import,zone_fonction, zone_main, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
-non terminal ,import1,import2,liste_import,entete_fonction,block,liste_fonction;
-
-prog::= PACK nom_pakage zone_import zone_fonction {:
+non terminal import1,import2,liste_import,entete_fonction,block,liste_fonction,contenu_block,affectation,operation_comparaison;
+non terminal instruction_calcul,appel_fonction,affectation_variable,valeur,instruction_if,valeur_binaire,comparaison,operateur_comparaison;
+non terminal instruction_for,for_range, for_simple,operation;
+prog::= PACK VARIABLE zone_import zone_fonction {:
 					//System.out.println("ok");	
 				:};
-nom_pakage::= MAIN | VARIABLE;
+//nom_pakage::= MAIN | VARIABLE;
 zone_import::= import1	{:
 							System.out.println("zone import 1 ok");
 							//System.out.println("AFFICHAGE DES IMPORTS");
@@ -52,18 +53,37 @@ zone_fonction::= liste_fonction {:
 	System.out.println("zone fonction ok"); 
 	:} | ;
 liste_fonction ::= entete_fonction block liste_fonction | entete_fonction block ;
-entete_fonction::= FUNC VARIABLE  PAROUV PARFER;
-block::=ACCOUV ACCFER;
+entete_fonction::= FUNC VARIABLE PAROUV PARFER;
+block::=ACCOUV contenu_block ACCFER;
+contenu_block::= appel_fonction contenu_block | declaration_variable contenu_block| affectation_variable contenu_block | instruction_if |/* instruction_for |*/;
+appel_fonction::=VARIABLE PAROUV PARFER;
+declaration_variable::= VAR liste_variable type_variable; 
+liste_variable::= VARIABLE VIRG liste_variable | VARIABLE;
+type_variable::=INT| BOOL;
+affectation_variable::= VARIABLE EGAL valeur;
+valeur::=TRUE | FALSE | ENTIER | VARIABLE;
+instruction_if::= IF comparaison block;
+comparaison::= valeur_binaire | operation_comparaison;
+valeur_binaire::=TRUE | FALSE | VARIABLE | POINTINTER valeur_binaire;
+operation_comparaison::= valeur operateur_comparaison valeur operateur_comparaison comparaison | valeur operateur_comparaison valeur;
+operateur_comparaison::= EGAL EGAL | SUPE | INFE | INFE EGAL | SUPE EGAL | POINTINTER EGAL | BARREVER BARREVER| ESPER ESPER; 
+instruction_for::= FOR for_range block | FOR for_simple block;
+for_range::= liste_variable DEUXPOINT EGAL RANGE VARIABLE;
+for_simple::= VARIABLE DEUXPOINT EGAL valeur POINTVIRG VARIABLE operateur_comparaison VARIABLE POINTVIRG VARIABLE operation;
+operation:=VARIABLE
 
-
-/*type_variable::=INT| BOOL;
-
+/*
 declaration_variable::= VAR liste_variable type_variable ; 
 liste_variable::= ensemble_variable liste_variable | ensemble_variable;
 ensemble_variable::= variables VIRG ensemble_variable| variables;
 variables::= simple| tableau
 simple ::= VARIABLE ;
 tableau::= VARIABLE CROOUV ENTIER CROFER
+
+
+
+/*type_variable::=INT| BOOL;
+
 
 liste_variable_fonction::=
 */

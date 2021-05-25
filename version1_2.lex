@@ -12,17 +12,19 @@ func = "func"
 import = "import"
 for = "for"
 go = "go"
+if = "if"
 const="const"
 var = "var"
 type = "type"
 make = "make"
 chan ="chan"
+range ="range"
 int = "int" 
 bool= "bool"
 true = "true"
 false = "false"
 number = [0-9]+
-variable =[a-z][a-zA-Z0-9]+
+variable =[a-z][a-zA-Z0-9]*
 
 %%
 "="			{ return new Symbol(sym.EGAL); }
@@ -43,11 +45,15 @@ variable =[a-z][a-zA-Z0-9]+
 "{"			{ return new Symbol(sym.ACCOUV); }
 "}"			{ return new Symbol(sym.ACCFER); }
 ";"			{ return new Symbol(sym.POINTVIRG); }
+"|"			{ return new Symbol(sym.BARREVER); }
+"!"			{ return new Symbol(sym.POINTINTER); }
+"&"			{ return new Symbol(sym.ESPER); }
 " "			{}
 {var}		{ return new Symbol(sym.VAR); }
 {number}	{ return new Symbol(sym.ENTIER, new Integer (yytext()));}
 {comments}	{}
 {pack}		{ return new Symbol(sym.PACK); }
+{if}		{ return new Symbol(sym.IF); }
 {func}		{ return new Symbol(sym.FUNC); }
 {import}	{ return new Symbol(sym.IMPORT); }
 {for}		{ return new Symbol(sym.FOR); }
@@ -60,6 +66,7 @@ variable =[a-z][a-zA-Z0-9]+
 {const}		{ return new Symbol(sym.CONST); }
 {true}		{ return new Symbol(sym.TRUE); }
 {false}		{ return new Symbol(sym.FALSE); }
+{range}		{ return new Symbol(sym.RANGE); }
 "\r\n" 		{}
 "\n"		{}
 "\t"		{}

@@ -1,3 +1,4 @@
+  
 LEX = version1_2.lex
 CUP = version1_2.cup
 
