@@ -1,7 +1,7 @@
 import java_cup.runtime.*;
 import java.io.*;
+import java.io.File;
 import java.util.*;
-
 parser code {:
 	public static void main(String args[]) throws Exception {
 		new parser(new Yylex(new InputStreamReader(System.in))).parse();
@@ -9,81 +9,142 @@ parser code {:
 :}
 
 action code {:
-	public ArrayList<String> listeImport = new ArrayList<>();
-	String rendu="";
+	public String rendu="#include <stdio.h>\n#include <stdlib.h>\n#include <pthread.h>\n";
+	public String valeur="";
+	public String liste="";
+	public String canaux="";
+	public String changementCanaux="";
+	public String instructions="";
+	public String der="";
+	public String mafonction="";
+	int cptCanaux=0;
+	int cptVariable=0;
+	int cpt=0;
+	public ArrayList<String> listegoroutines = new ArrayList<>();
+	public ArrayList<String> listevaleurVariables = new ArrayList<>();
 :}
-terminal String VARIABLE;
-terminal Integer ENTIER;
+terminal String VARIABLE ,CHAINE,VALEURBOOLEEN,TYPEVARIABLE;
+terminal String ENTIER;
 
-terminal TYPE,CHAN, SYNC,MAKE, GUIL, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, ACCFER, POINTVIRG, ESPACE
-,ESPER, INTER,VAR, PACK,FUNC, IMPORT,IF, FOR, GO, INT, BOOL, CONST,TRUE, FALSE, STRING, EGAL, CROOUV, CROFER,BARREVER,POINTINTER,RANGE;
+terminal CHAN, SYNC,MAKE, MOINS, PLUS, SLASH, MULT, DEUXPOINT, INFE, SUPE, POINT, VIRG, PAROUV, PARFER, ACCOUV, 
+ACCFER, POINTVIRG, ESPACE,VAR, PACK,FUNC, MAIN,IMPORT, FOR, GO, INT, CONST, EGAL, CROOUV, CROFER,BARREVER,
+POINTINTER,RANGE,INCRE,DECRE,PRINTLN,SELECT,MOD,IF,ELSE;
+
+non terminal programme, zone_import, zone_main,zone_fonction;
+non terminal liste_declaration_constante,declaration_constante;
+non terminal valeurVariable,block_instruction;
+non terminal suite_variable, suite_valeur_variable,liste_instruction,instruction,declaration_sans_affectation;
+non terminal declaration_affectation ,declaration , appel_fonction ,lancement_goroutine, select;
+non terminal zone_constante,instruction_println,declaration_canaux;
+non terminal entete_fonction,boucle_for,boucle_for_simple,boucle_for_infini,operateur_comparaison,ajout;
+non terminal valeurEniere,expression,canal,operateur,conversion,declaration_tableaux;
+non terminal declaration_variable,instruction_canaux,calcul,lecture,ecriture,liste_variable_fonction;
+non terminal nom_pck,code_fonction ,fonction,allocation_canaux,tailleCanaux,deroulement,instruction_if;
+/*---------------------------------------------------------------------------------*/
+programme::= PACK nom_pck zone_import code_fonction{:
+											System.out.println("programme complet");
+											System.out.println(rendu);
+											
+											File file= new File("resultat.c");
+											try (BufferedWriter bufferedWriter=new BufferedWriter(new FileWriter(file)))
+											{
+												bufferedWriter.write(rendu);
+											}
+											catch(IOException e)
+											{
+												e.printStackTrace();
+											}
+										:}|{:
+											System.out.println("fichier vide");
+
+										:}; 
+//zone_constante zone_main zone_fonction;
+nom_pck::= VARIABLE:nom {: valeur=nom; :} | MAIN:nom {: valeur="main "; :};
+zone_import::= 	IMPORT CHAINE zone_import | IMPORT CHAINE;
+
+code_fonction::=fonction code_fonction | declaration_constante code_fonction |;
+declaration_constante::= CONST VARIABLE:v TYPEVARIABLE:t EGAL valeurVariable:val {:
+																			
+																			rendu=rendu+"const "+t+ " "+ v+"="+ valeur+";\n";
+
+																		:};
+valeurVariable::=CHAINE:val {: valeur=val; :}|ENTIER:val {: valeur=val; :}| ENTIER POINT ENTIER:val {: valeur=val; :}|VALEURBOOLEEN:val {: valeur=val; :}|VARIABLE:val {: valeur=val; :}|expression;
+
+fonction::= entete_fonction block_instruction;
+entete_fonction::=FUNC nom_pck PAROUV liste_variable_fonction PARFER{:
+ 																	rendu =rendu+"void "+ valeur+ "(" +liste +")\n";
+ 																	liste="";
+ 																	canaux="";
+ 																	cptVariable=0;
+ 																	if (cptCanaux==0) {
+ 																		cptCanaux=1;
+ 																	}
+ 																	:};
+
+liste_variable_fonction::=declaration_canaux VIRG liste_variable_fonction {: 
+																			liste=liste+","+canaux; 
+																			canaux="";
+																			cptVariable++;
+																			:}
+				| VARIABLE: v  TYPEVARIABLE:t VIRG liste_variable_fonction {:
+																			liste=liste+t+" "+v;
+																			:}|
+																			declaration_canaux{:liste=liste+canaux;
+																				canaux="";
+																				cptVariable++;
+																				:}
+																		| VARIABLE:v TYPEVARIABLE:t {:liste=liste+t+" "+v+" "; :}|;
+block_instruction::= ACCOUV liste_instruction ACCFER{:
+	if(cptCanaux==1){
+		cptCanaux=0;
+		rendu=rendu+"{\n"+changementCanaux+instructions+"\n}\n\n";
+		liste="";
+		changementCanaux="";
+	}
+
+		:};
+liste_instruction::= declaration_canaux liste_instruction | select liste_instruction|declaration_variable liste_instruction |allocation_canaux liste_instruction |boucle_for liste_instruction|lancement_goroutine liste_instruction | appel_fonction liste_instruction |
+instruction_println liste_instruction |instruction_canaux liste_instruction | declaration_affectation liste_instruction | instruction_if|;
+select::=SELECT block_instruction;
+declaration_affectation::=declaration_variable EGAL valeurVariable{:
+																		instructions += instructions.substring(0, instructions.length()-1);
+																		instructions+="="+valeur+";";:};
+declaration_canaux ::= VARIABLE:v CHAN TYPEVARIABLE:t {: 
+															canaux+= t.toUpperCase()+"_STREAM *" +v+" "; 
+															changementCanaux=changementCanaux+"#pragma HLS INTERFACE axis port="+v+"\n";
+														:};
+declaration_variable::= VAR suite_variable TYPEVARIABLE:t {:
+														
+															instructions="\n"+instructions+""+"AXI_"+t.toUpperCase()+" "+liste+";\n";
+															:};
+suite_variable::= VARIABLE:v {:	
+								liste=liste+v;
+							:}
+| VARIABLE:v VIRG suite_variable{:liste=liste+","+v;:};
+allocation_canaux::= VARIABLE DEUXPOINT EGAL MAKE PAROUV tailleCanaux PARFER;
+tailleCanaux::= CHAN TYPEVARIABLE | CHAN TYPEVARIABLE VIRG ENTIER;
+boucle_for::=FOR block_instruction{:instructions+="for{";
+instructions="";
+:} | boucle_for_simple;
 
 
-non terminal prog, zone_import,zone_fonction, zone_main, type_variable,declaration_variable,liste_variable,liste_variable_fonction;
-non terminal import1,import2,liste_import,entete_fonction,block,liste_fonction,contenu_block,affectation,operation_comparaison;
-non terminal instruction_calcul,appel_fonction,affectation_variable,valeur,instruction_if,valeur_binaire,comparaison,operateur_comparaison;
-non terminal instruction_for,for_range, for_simple,operation;
-prog::= PACK VARIABLE zone_import zone_fonction {:
-					//System.out.println("ok");	
-				:};
-//nom_pakage::= MAIN | VARIABLE;
-zone_import::= import1	{:
-							System.out.println("zone import 1 ok");
-							//System.out.println("AFFICHAGE DES IMPORTS");
-	                        //System.out.println(listeImport);
-	                        for (int i = 0; i < listeImport.size(); i++) {
-     							if (listeImport.get(i).equals("fmt")) {
-     							 	rendu= rendu+"#include<stdio.h>";
-     							}
-	    					}
+boucle_for_simple::=FOR VARIABLE:a DEUXPOINT EGAL ENTIER:b POINTVIRG valeurEniere operateur_comparaison valeurEniere POINTVIRG deroulement block_instruction{:instructions+="";:};
 
-						:} | import2 {:
-						System.out.println("zone import 1 ok");	
-				:};
-import1::= 	IMPORT GUIL VARIABLE:var1 GUIL import1	{:
-														listeImport.add(var1);
-													:} |
-			IMPORT GUIL VARIABLE:var1 GUIL{:
-										listeImport.add(var1);
-									:}; 
+deroulement::= VARIABLE:a INCRE:b{:der=""+a+"++";:} | VARIABLE:a DECRE:b{:der=""+a+"--";:} | INCRE VARIABLE:a {:der="++"+a;:}| DECRE VARIABLE:a{:der="--"+a;:};
+operateur_comparaison::= SUPE {:valeur=">";:}| INFE {:valeur="<";:} | EGAL EGAL {:valeur="==";:} | INFE EGAL{:valeur="<=";:} | SUPE EGAL{:valeur=">=";:} | POINTINTER EGAL{:valeur="!=";:};
+valeurEniere::=ENTIER:t {:changementCanaux=t;:}| VARIABLE:t {:changementCanaux=t;:}; 
 
-import2::= IMPORT PAROUV liste_import PARFER;
-liste_import::= GUIL VARIABLE GUIL liste_import | GUIL VARIABLE GUIL;
-zone_fonction::= liste_fonction {: 
-	System.out.println("zone fonction ok"); 
-	:} | ;
-liste_fonction ::= entete_fonction block liste_fonction | entete_fonction block ;
-entete_fonction::= FUNC VARIABLE PAROUV PARFER;
-block::=ACCOUV contenu_block ACCFER;
-contenu_block::= appel_fonction contenu_block | declaration_variable contenu_block| affectation_variable contenu_block | instruction_if |/* instruction_for |*/;
-appel_fonction::=VARIABLE PAROUV PARFER;
-declaration_variable::= VAR liste_variable type_variable; 
-liste_variable::= VARIABLE VIRG liste_variable | VARIABLE;
-type_variable::=INT| BOOL;
-affectation_variable::= VARIABLE EGAL valeur;
-valeur::=TRUE | FALSE | ENTIER | VARIABLE;
-instruction_if::= IF comparaison block;
-comparaison::= valeur_binaire | operation_comparaison;
-valeur_binaire::=TRUE | FALSE | VARIABLE | POINTINTER valeur_binaire;
-operation_comparaison::= valeur operateur_comparaison valeur operateur_comparaison comparaison | valeur operateur_comparaison valeur;
-operateur_comparaison::= EGAL EGAL | SUPE | INFE | INFE EGAL | SUPE EGAL | POINTINTER EGAL | BARREVER BARREVER| ESPER ESPER; 
-instruction_for::= FOR for_range block | FOR for_simple block;
-for_range::= liste_variable DEUXPOINT EGAL RANGE VARIABLE;
-for_simple::= VARIABLE DEUXPOINT EGAL valeur POINTVIRG VARIABLE operateur_comparaison VARIABLE POINTVIRG VARIABLE operation;
-operation:=VARIABLE
-
-/*
-declaration_variable::= VAR liste_variable type_variable ; 
-liste_variable::= ensemble_variable liste_variable | ensemble_variable;
-ensemble_variable::= variables VIRG ensemble_variable| variables;
-variables::= simple| tableau
-simple ::= VARIABLE ;
-tableau::= VARIABLE CROOUV ENTIER CROFER
-
-
-
-/*type_variable::=INT| BOOL;
-
-
-liste_variable_fonction::=
-*/
+lancement_goroutine ::= GO appel_fonction{:
+	instructions+="pthread_t t_id"+cpt +" ;\n";
+	instructions+="pthread_create(&t_id"+cpt+",NULL,&"+mafonction+",NULL,);\n";
+	instructions+="pthread_join( t_id"+cpt+",NULL);\n";
+	cpt++;
+	:};
+appel_fonction::= VARIABLE:f PAROUV suite_valeur_variable PARFER {:mafonction=f;:}| VARIABLE:f PAROUV PARFER{:mafonction=f;:} ;
+suite_valeur_variable::=valeurVariable{:listevaleurVariables.add(valeur);:} | valeurVariable VIRG suite_valeur_variable {:listevaleurVariables.add(valeur);:};
+instruction_println::=PRINTLN PAROUV suite_valeur_variable PARFER;
+instruction_canaux::= lecture | ecriture;
+lecture::= VARIABLE:v EGAL INFE MOINS VARIABLE :y {:instructions="\n"+instructions+y+"->read("+v+");\n";:}| INFE MOINS VARIABLE:y {:instructions="\n"+instructions+y+"->read();\n";:} ;
+ecriture::= VARIABLE :v INFE MOINS valeurVariable {:instructions="\n"+instructions+v+"->write("+valeur+");\n";:};
+instruction_if::= IF valeurVariable operateur_comparaison valeurVariable block_instruction;
+instruction_else::= ELSE block_instruction;
